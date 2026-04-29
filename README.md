@@ -1,4 +1,5 @@
 # chatgpt2307
+
 # PflegeDoc – Dokumentationssoftware für außerklinische Intensivpflege
 
 ## 1. Überblick
