@@ -1,1 +1,25 @@
-const BASE='http://localhost:4000';const headers={'Content-Type':'application/json','x-tenant-id':'demo-tenant','x-user-role':'admin'};export async function api(path,options={}){const res=await fetch(`${BASE}${path}`,{...options,headers:{...headers,...(options.headers||{})}});return res.json();}
+const BASE = 'http://localhost:4000';
+
+const defaultHeaders = {
+  'Content-Type': 'application/json',
+  'x-tenant-id': 'demo-tenant',
+  'x-user-role': 'admin'
+};
+
+export async function api(path, options = {}) {
+  const response = await fetch(`${BASE}${path}`, {
+    ...options,
+    headers: {
+      ...defaultHeaders,
+      ...(options.headers || {})
+    }
+  });
+
+  const payload = await response.json();
+
+  if (!response.ok) {
+    throw new Error(payload.error || 'API request failed');
+  }
+
+  return payload;
+}
