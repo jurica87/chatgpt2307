@@ -1,0 +1,1 @@
+const BASE='http://localhost:4000';const headers={'Content-Type':'application/json','x-tenant-id':'demo-tenant','x-user-role':'admin'};export async function api(path,options={}){const res=await fetch(`${BASE}${path}`,{...options,headers:{...headers,...(options.headers||{})}});return res.json();}
