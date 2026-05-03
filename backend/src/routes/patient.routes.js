@@ -1,0 +1,16 @@
+import { Router } from 'express';
+import { createPatientHandler, getPatientsHandler } from '../modules/patients/patient.controller.js';
+import { requirePermission } from '../middleware/require-permission.js';
+import { PERMISSIONS } from '../config/roles.js';
+import { db } from '../data/mockData.js';
+const router = Router();
+router.get('/', requirePermission(PERMISSIONS.PATIENT_READ), getPatientsHandler);
+router.post('/', requirePermission(PERMISSIONS.PATIENT_CREATE), createPatientHandler);
+router.get('/:id/dashboard', (req,res)=>{const patient=db.patients.find((p)=>p.id===req.params.id&&p.tenantId===req.auth.tenantId);if(!patient)return res.status(404).json({error:'Patient not found'});res.json({data:{patient,activeShift:db.shifts[patient.id]??null,openMeasures:(db.measures[patient.id]??[]).filter((m)=>m.status!=='erledigt'),latestVitals:(db.vitals[patient.id]??[]).slice(-1)[0]??null,latestDoc:(db.docs[patient.id]??[]).slice(-1)[0]??null,warnings:patient.warnings}});});
+router.post('/:id/shift/start',(req,res)=>{db.shifts[req.params.id]={startedAt:new Date().toISOString(),nurse:req.body.nurse||'Unbekannt',handover:''};res.status(201).json({data:db.shifts[req.params.id]});});
+router.post('/:id/shift/end',(req,res)=>{const shift=db.shifts[req.params.id];if(!shift)return res.status(400).json({error:'No active shift'});shift.endedAt=new Date().toISOString();shift.handover=req.body.handover||'';res.json({data:shift});});
+router.get('/:id/measures',(req,res)=>res.json({data:db.measures[req.params.id]??[]}));
+router.post('/:id/measures/:measureId',(req,res)=>{const list=db.measures[req.params.id]??[];const measure=list.find((m)=>m.id===req.params.measureId);if(!measure)return res.status(404).json({error:'Measure not found'});measure.status=req.body.status;measure.comment=req.body.comment||'';res.json({data:measure});});
+router.post('/:id/vitals',(req,res)=>{const entry={...req.body,timestamp:new Date().toISOString()};db.vitals[req.params.id]=[...(db.vitals[req.params.id]??[]),entry];res.status(201).json({data:entry});});
+router.post('/:id/documentation',(req,res)=>{const entry={...req.body,timestamp:new Date().toISOString()};db.docs[req.params.id]=[...(db.docs[req.params.id]??[]),entry];res.status(201).json({data:entry});});
+export default router;
